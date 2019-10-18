@@ -85,6 +85,22 @@ public final class TypesTest {
     assertThat(getFirstTypeArgument(type)).isEqualTo(B.class);
   }
 
+  @Test public void newParameterizedType_missingTypeVars() {
+    try {
+      Types.newParameterizedType(List.class);
+      fail("Should have errored due to missing type variable");
+    } catch (Exception e) {
+      assertThat(e).hasMessageContaining("Missing type arguments");
+    }
+
+    try {
+      Types.newParameterizedTypeWithOwner(TypesTest.class, A.class);
+      fail("Should have errored due to missing type variable");
+    } catch (Exception e) {
+      assertThat(e).hasMessageContaining("Missing type arguments");
+    }
+  }
+
   @Test public void parameterizedTypeWithRequiredOwnerMissing() throws Exception {
     try {
       Types.newParameterizedType(A.class, B.class);
@@ -303,6 +319,40 @@ public final class TypesTest {
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessageContaining("Class does not have a JsonClass annotation");
     }
+  }
+
+  //
+  // Regression tests for https://github.com/square/moshi/issues/338
+  //
+  // Adapted from https://github.com/google/gson/pull/1128
+  //
+
+  private static final class RecursiveTypeVars<T> {
+    RecursiveTypeVars<? super T> superType;
+  }
+
+  @Test public void recursiveTypeVariablesResolve() {
+    JsonAdapter<RecursiveTypeVars<String>> adapter = new Moshi.Builder().build().adapter(Types
+        .newParameterizedTypeWithOwner(TypesTest.class, RecursiveTypeVars.class, String.class));
+    assertThat(adapter).isNotNull();
+  }
+
+  @Test public void recursiveTypeVariablesResolve1() {
+    JsonAdapter<TestType> adapter = new Moshi.Builder().build().adapter(TestType.class);
+    assertThat(adapter).isNotNull();
+  }
+
+  @Test public void recursiveTypeVariablesResolve2() {
+    JsonAdapter<TestType2> adapter = new Moshi.Builder().build().adapter(TestType2.class);
+    assertThat(adapter).isNotNull();
+  }
+
+  private static class TestType<X> {
+    TestType<? super X> superType;
+  }
+
+  private static class TestType2<X, Y> {
+    TestType2<? super Y, ? super X> superReversedType;
   }
 
   @JsonClass(generateAdapter = false)

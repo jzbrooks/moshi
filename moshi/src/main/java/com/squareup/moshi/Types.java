@@ -109,6 +109,9 @@ public final class Types {
    * method if {@code rawType} is not enclosed in another type.
    */
   public static ParameterizedType newParameterizedType(Type rawType, Type... typeArguments) {
+    if (typeArguments.length == 0) {
+      throw new IllegalArgumentException("Missing type arguments for " + rawType);
+    }
     return new ParameterizedTypeImpl(null, rawType, typeArguments);
   }
 
@@ -118,6 +121,9 @@ public final class Types {
    */
   public static ParameterizedType newParameterizedTypeWithOwner(
       Type ownerType, Type rawType, Type... typeArguments) {
+    if (typeArguments.length == 0) {
+      throw new IllegalArgumentException("Missing type arguments for " + rawType);
+    }
     return new ParameterizedTypeImpl(ownerType, rawType, typeArguments);
   }
 
@@ -133,7 +139,13 @@ public final class Types {
    * ? extends Object}.
    */
   public static WildcardType subtypeOf(Type bound) {
-    return new WildcardTypeImpl(new Type[] { bound }, EMPTY_TYPE_ARRAY);
+    Type[] upperBounds;
+    if (bound instanceof WildcardType) {
+      upperBounds = ((WildcardType) bound).getUpperBounds();
+    } else {
+      upperBounds = new Type[] { bound };
+    }
+    return new WildcardTypeImpl(upperBounds, EMPTY_TYPE_ARRAY);
   }
 
   /**
@@ -141,7 +153,13 @@ public final class Types {
    * bound} is {@code String.class}, this returns {@code ? super String}.
    */
   public static WildcardType supertypeOf(Type bound) {
-    return new WildcardTypeImpl(new Type[] { Object.class }, new Type[] { bound });
+    Type[] lowerBounds;
+    if (bound instanceof WildcardType) {
+      lowerBounds = ((WildcardType) bound).getLowerBounds();
+    } else {
+      lowerBounds = new Type[] { bound };
+    }
+    return new WildcardTypeImpl(new Type[] { Object.class }, lowerBounds);
   }
 
   public static Class<?> getRawType(Type type) {
