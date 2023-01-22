@@ -24,10 +24,10 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlin.annotation.AnnotationRetention.RUNTIME
 import org.intellij.lang.annotations.Language
 import org.junit.Assert.fail
 import org.junit.Test
-import kotlin.annotation.AnnotationRetention.RUNTIME
 
 class DualKotlinTest {
 
@@ -612,6 +612,20 @@ class DualKotlinTest {
 
     val result = adapter.fromJson(testJson)!!
     assertThat(result).isEqualTo(instance)
+  }
+
+  @Test
+  fun duplicateKeyDisallowedInObjectType() {
+    val adapter = moshi.adapter<Any>()
+    val json = "{\"diameter\":5,\"diameter\":5,\"extraCheese\":true}"
+    try {
+      adapter.fromJson(json)
+      fail()
+    } catch (expected: JsonDataException) {
+      assertThat(expected)
+        .hasMessageThat()
+        .isEqualTo("Map key 'diameter' has multiple values at path $.diameter: 5.0 and 5.0")
+    }
   }
 
   interface IntersectionTypeInterface<E : Enum<E>>

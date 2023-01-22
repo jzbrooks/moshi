@@ -933,8 +933,7 @@ class GeneratedAdaptersTest {
     var b: Int = -1
   }
 
-  /** Generated adapters don't track enough state to detect duplicated values. */
-  @Ignore @Test fun duplicatedValueParameter() {
+  @Test fun duplicatedValueParameter() {
     val moshi = Moshi.Builder().build()
     val jsonAdapter = moshi.adapter<DuplicateValueParameter>()
 
@@ -946,10 +945,10 @@ class GeneratedAdaptersTest {
     }
   }
 
+  @JsonClass(generateAdapter = true)
   class DuplicateValueParameter(var a: Int = -1, var b: Int = -2)
 
-  /** Generated adapters don't track enough state to detect duplicated values. */
-  @Ignore @Test fun duplicatedValueProperty() {
+  @Test fun duplicatedValueProperty() {
     val moshi = Moshi.Builder().build()
     val jsonAdapter = moshi.adapter<DuplicateValueProperty>()
 
@@ -961,6 +960,7 @@ class GeneratedAdaptersTest {
     }
   }
 
+  @JsonClass(generateAdapter = true)
   class DuplicateValueProperty {
     var a: Int = -1
     var b: Int = -2

@@ -420,6 +420,15 @@ public class AdapterGenerator(
       // Proceed as usual
       if (property.hasLocalIsPresentName || property.hasConstructorDefault) {
         result.beginControlFlow("%L ->", propertyIndex)
+
+        result.beginControlFlow(
+          "if (%N != %L)",
+          property.localName,
+          property.target.type.defaultPrimitiveValue()
+        )
+        result.addStatement("throw %L", duplicatePropertyValues(property, readerParam))
+        result.endControlFlow()
+
         if (property.delegateKey.nullable) {
           result.addStatement(
             "%N = %N.fromJson(%N)",
@@ -454,10 +463,19 @@ public class AdapterGenerator(
         }
         result.endControlFlow()
       } else {
+        result.beginControlFlow("%L ->", propertyIndex)
+
+        result.beginControlFlow(
+          "if (%N != %L)",
+          property.localName,
+          property.target.type.defaultPrimitiveValue()
+        )
+        result.addStatement("throw %L", duplicatePropertyValues(property, readerParam))
+        result.endControlFlow()
+
         if (property.delegateKey.nullable) {
           result.addStatement(
-            "%L -> %N = %N.fromJson(%N)",
-            propertyIndex,
+            "%N = %N.fromJson(%N)",
             property.localName,
             nameAllocator[property.delegateKey],
             readerParam
@@ -465,14 +483,15 @@ public class AdapterGenerator(
         } else {
           val exception = unexpectedNull(property, readerParam)
           result.addStatement(
-            "%L -> %N = %N.fromJson(%N) ?: throw·%L",
-            propertyIndex,
+            "%N = %N.fromJson(%N) ?: throw·%L",
             property.localName,
             nameAllocator[property.delegateKey],
             readerParam,
             exception
           )
         }
+
+        result.endControlFlow() // when branch
       }
       if (property.hasConstructorParameter) {
         constructorPropertyTypes += property.target.type.asTypeBlock()
@@ -655,6 +674,19 @@ public class AdapterGenerator(
       result.addStatement("return·%1N", resultName)
     }
     return result.build()
+  }
+
+  private fun duplicatePropertyValues(
+    property: PropertyGenerator,
+    reader: ParameterSpec
+  ): CodeBlock {
+    return CodeBlock.of(
+      "%M(%S, %S, %N)",
+      MemberName(MOSHI_UTIL_PACKAGE, "duplicateProperty"),
+      property.localName,
+      property.jsonName,
+      reader
+    )
   }
 
   private fun unexpectedNull(property: PropertyGenerator, reader: ParameterSpec): CodeBlock {

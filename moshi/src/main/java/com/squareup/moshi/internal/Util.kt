@@ -463,6 +463,20 @@ public fun missingProperty(
   return JsonDataException(message)
 }
 
+public fun duplicateProperty(
+  propertyName: String,
+  jsonName: String,
+  reader: JsonReader
+): JsonDataException {
+  val path = reader.path
+  val message = if (jsonName == propertyName) {
+    "Multiple values for '$propertyName' at $path"
+  } else {
+    "Multiple values for '$propertyName' (JSON name '$jsonName') at $path"
+  }
+  return JsonDataException(message)
+}
+
 public fun unexpectedNull(
   propertyName: String,
   jsonName: String,

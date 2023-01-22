@@ -22,6 +22,7 @@ import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.squareup.moshi.internal.duplicateProperty
 import com.squareup.moshi.internal.generatedAdapter
 import com.squareup.moshi.internal.isPlatformType
 import com.squareup.moshi.internal.jsonAnnotations
@@ -81,8 +82,10 @@ internal class KotlinJsonAdapter<T>(
 
       val propertyIndex = binding.propertyIndex
       if (values[propertyIndex] !== ABSENT_VALUE) {
-        throw JsonDataException(
-          "Multiple values for '${binding.property.name}' at ${reader.path}"
+        throw duplicateProperty(
+          binding.property.name,
+          binding.jsonName,
+          reader
         )
       }
 
